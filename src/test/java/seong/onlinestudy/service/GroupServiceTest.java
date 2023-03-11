@@ -16,6 +16,7 @@ import seong.onlinestudy.domain.*;
 import seong.onlinestudy.dto.GroupDto;
 import seong.onlinestudy.dto.GroupStudyDto;
 import seong.onlinestudy.exception.PermissionControlException;
+import seong.onlinestudy.repository.GroupMemberRepository;
 import seong.onlinestudy.repository.GroupRepository;
 import seong.onlinestudy.repository.StudyRepository;
 import seong.onlinestudy.request.GroupCreateRequest;
@@ -38,6 +39,8 @@ class GroupServiceTest {
     GroupRepository groupRepository;
     @Mock
     StudyRepository studyRepository;
+    @Mock
+    GroupMemberRepository groupMemberRepository;
 
     @InjectMocks
     GroupService groupService;
@@ -141,12 +144,17 @@ class GroupServiceTest {
         GroupStudyDto groupStudyDto1 = new GroupStudyDto(1L, 1L, "테스트스터디", 1000);
         GroupStudyDto groupStudyDto2 = new GroupStudyDto(2L, 2L, "테스트스터디2", 2000);
 
+        GroupMember groupMember = GroupMember.createGroupMember(member, GroupRole.MASTER);
+        group1.addGroupMember(groupMember);
+        group2.addGroupMember(groupMember);
+
         PageImpl<Group> testGroups = new PageImpl<>(List.of(group1, group2), PageRequest.of(request.getPage(), request.getSize()), 2);
 
         given(groupRepository.findGroups(any(), any(), any(), any(), any()))
                 .willReturn(testGroups);
         given(studyRepository.findStudiesInGroups(testGroups.getContent()))
                 .willReturn(List.of(groupStudyDto1, groupStudyDto2));
+        given(groupMemberRepository.findGroupMasters(any())).willReturn(List.of(groupMember, groupMember));
 
 
         //when
@@ -161,6 +169,7 @@ class GroupServiceTest {
                 assertThat(study.getName()).isEqualTo("테스트스터디");
             });
         });
+        assertThat(groupDtos.get(0).getStudies().get(0).getName()).isEqualTo("테스트스터디1");
     }
 
     private Group createGroup(String name, int count, GroupMember groupMember) {

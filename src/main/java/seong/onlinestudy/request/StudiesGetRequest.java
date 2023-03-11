@@ -19,7 +19,8 @@ public class StudiesGetRequest {
         page = 0;
         size = 10;
         name = "";
-        date = LocalDate.now().minusDays(7);
+        //6일 전 05시부터 다음날 05시까지
+        date = LocalDate.now().minusDays(6);
         days = 7;
     }
 }

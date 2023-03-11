@@ -42,7 +42,7 @@ public class StudyService {
         if(request.getName().isBlank()) { //문자열 검색 조건이 없으면 로그인한 회원의 스터디 목록을 기본으로 가져옴
             LocalDateTime startTime = request.getDate().atStartOfDay().plusHours(5);
 
-            Page<Study> studies = studyRepository.findStudiesByMember(loginMember, startTime, startTime.plusDays(request.getDays()), pageRequest);
+            Page<Study> studies = studyRepository.findStudiesByMember(loginMember.getId(), startTime, startTime.plusDays(request.getDays()), pageRequest);
             studyDtos = studies.map(study -> {
                 StudyDto studyDto = StudyDto.from(study);
                 studyDto.setStudyTime(study);

@@ -128,7 +128,7 @@ class StudyRepositoryTest {
                 .getResultList();*/
 
         Page<Study> studiesByMember
-                = studyRepository.findStudiesByMember(members.get(0), now.minusDays(3), now.plusDays(3), PageRequest.of(0, 2));
+                = studyRepository.findStudiesByMember(members.get(0).getId(), now.minusDays(3), now.plusDays(3), PageRequest.of(0, 2));
         List<Study> findStudies = studiesByMember.getContent();
 
         //then

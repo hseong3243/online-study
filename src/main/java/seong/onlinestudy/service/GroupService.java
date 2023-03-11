@@ -83,8 +83,8 @@ public class GroupService {
                 GroupStudyDto study = studyIter.next();
                 if(study.getGroupId().equals(group.getId())) {
                     groupDto.getStudies().add(study);
+                    studyIter.remove();
                 }
-                studyIter.remove();
             }
 
             Iterator<GroupMemberDto> memberIter = groupMemberDtos.iterator();
@@ -92,8 +92,8 @@ public class GroupService {
                 GroupMemberDto member = memberIter.next();
                 if (member.getGroupId().equals(group.getId())) {
                     groupDto.getGroupMembers().add(member);
+                    memberIter.remove();
                 }
-                memberIter.remove();
             }
 
             return groupDto;
