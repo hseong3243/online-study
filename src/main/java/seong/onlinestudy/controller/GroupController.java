@@ -9,6 +9,7 @@ import seong.onlinestudy.domain.Member;
 import seong.onlinestudy.dto.GroupDto;
 import seong.onlinestudy.exception.InvalidSessionException;
 import seong.onlinestudy.request.GroupCreateRequest;
+import seong.onlinestudy.request.GroupUpdateRequest;
 import seong.onlinestudy.request.GroupsGetRequest;
 import seong.onlinestudy.service.GroupService;
 
@@ -93,5 +94,18 @@ public class GroupController {
         groupService.deleteGroup(id, loginMember);
 
         return new Result<>("200", "deleted");
+    }
+
+    @PostMapping("/group/{id}")
+    public Result<Long> updateGroup(@PathVariable Long id,
+                                    @RequestBody @Valid GroupUpdateRequest request,
+                                    @SessionAttribute(name = LOGIN_MEMBER, required = false) Member loginMember) {
+        if(loginMember == null) {
+            throw new InvalidSessionException("세션 정보가 유효하지 않습니다.");
+        }
+
+        Long groupId = groupService.updateGroup(id, request, loginMember);
+
+        return new Result<>("200", groupId);
     }
 }

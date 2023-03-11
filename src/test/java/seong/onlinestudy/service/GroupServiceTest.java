@@ -19,10 +19,7 @@ import seong.onlinestudy.exception.PermissionControlException;
 import seong.onlinestudy.repository.GroupMemberRepository;
 import seong.onlinestudy.repository.GroupRepository;
 import seong.onlinestudy.repository.StudyRepository;
-import seong.onlinestudy.request.GroupCreateRequest;
-import seong.onlinestudy.request.GroupsGetRequest;
-import seong.onlinestudy.request.MemberCreateRequest;
-import seong.onlinestudy.request.OrderBy;
+import seong.onlinestudy.request.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +27,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+import static seong.onlinestudy.MyUtils.createMembers;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -91,8 +90,8 @@ class GroupServiceTest {
 
         Group group = createGroup("test", 30, groupMember);
         group.addGroupMember(groupMember2);
-        ReflectionTestUtils.setField(master, "id", 1L);
-        ReflectionTestUtils.setField(memberA, "id", 2L);
+        setField(master, "id", 1L);
+        setField(memberA, "id", 2L);
 
 
         given(groupRepository.findById(1L)).willReturn(Optional.of(group));
@@ -116,8 +115,8 @@ class GroupServiceTest {
 
         Group group = createGroup("test", 30, groupMember);
         group.addGroupMember(groupMember2);
-        ReflectionTestUtils.setField(master, "id", 1L);
-        ReflectionTestUtils.setField(memberA, "id", 2L);
+        setField(master, "id", 1L);
+        setField(memberA, "id", 2L);
 
         given(groupRepository.findById(1L)).willReturn(Optional.of(group));
 
@@ -138,8 +137,8 @@ class GroupServiceTest {
         Member member = MyUtils.createMember("testMember", "testMember");
         Group group1 = MyUtils.createGroup("테스트그룹", 30, member);
         Group group2 = MyUtils.createGroup("테스트그룹2", 30, member);
-        ReflectionTestUtils.setField(group1, "id", 1L);
-        ReflectionTestUtils.setField(group2, "id", 2L);
+        setField(group1, "id", 1L);
+        setField(group2, "id", 2L);
 
         GroupStudyDto groupStudyDto1 = new GroupStudyDto(1L, 1L, "테스트스터디", 1000);
         GroupStudyDto groupStudyDto2 = new GroupStudyDto(2L, 2L, "테스트스터디2", 2000);
@@ -170,6 +169,51 @@ class GroupServiceTest {
             });
         });
         assertThat(groupDtos.get(0).getStudies().get(0).getName()).isEqualTo("테스트스터디1");
+    }
+
+    @Test
+    void updateGroup() {
+        //given
+        Member member = createMember("member", "member");
+        setField(member, "id", 1L);
+        Group group = MyUtils.createGroup("group", 30, member);
+        setField(group, "id", 1L);
+        GroupMember master = group.getGroupMembers().get(0);
+
+        given(groupRepository.findGroupWithMembers(any())).willReturn(Optional.of(group));
+        GroupUpdateRequest request = new GroupUpdateRequest();
+        request.setDescription("한줄평");
+        request.setHeadcount(20);
+
+        //when
+        Long groupId = groupService.updateGroup(1L, request, member);
+
+        //then
+        assertThat(group.getHeadcount()).isEqualTo(20);
+        assertThat(group.getDescription()).isEqualTo("한줄평");
+    }
+
+    @Test
+    void updateGroup_인원수예외() {
+        //given
+        List<Member> members = createMembers(30, true);
+        Group group = MyUtils.createGroup("group", 30, members.get(0));
+        setField(group, "id", 1L);
+        GroupMember master = group.getGroupMembers().get(0);
+
+        for(int i=1; i<30; i++) {
+            GroupMember groupMember = GroupMember.createGroupMember(members.get(i), GroupRole.USER);
+            group.addGroupMember(groupMember);
+        }
+
+        given(groupRepository.findGroupWithMembers(any())).willReturn(Optional.of(group));
+        GroupUpdateRequest request = new GroupUpdateRequest();
+        request.setDescription("한줄평");
+        request.setHeadcount(20);
+
+        //when
+        assertThatThrownBy(() -> groupService.updateGroup(1L, request, members.get(0)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     private Group createGroup(String name, int count, GroupMember groupMember) {

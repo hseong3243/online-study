@@ -16,6 +16,7 @@ import seong.onlinestudy.repository.MemberRepository;
 import seong.onlinestudy.repository.StudyRepository;
 import seong.onlinestudy.exception.PermissionControlException;
 import seong.onlinestudy.request.GroupCreateRequest;
+import seong.onlinestudy.request.GroupUpdateRequest;
 import seong.onlinestudy.request.GroupsGetRequest;
 
 import java.util.*;
@@ -137,5 +138,23 @@ public class GroupService {
                 .orElseThrow(() -> new NoSuchElementException("잘못된 접근입니다."));
 
         groupMemberRepository.deleteByMember(member);
+    }
+
+    @Transactional
+    public Long updateGroup(Long id, GroupUpdateRequest request, Member loginMember) {
+        Group group = groupRepository.findGroupWithMembers(id)
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 그룹입니다."));
+
+        GroupMember master = group.getGroupMembers().stream()
+                .filter(groupMember -> groupMember.getRole().equals(MASTER)).findFirst()
+                .orElseThrow(() -> new RuntimeException("그룹장은 반드시 존재해야합니다."));
+
+        if (!master.getMember().getId().equals(loginMember.getId())) {
+            throw new PermissionControlException("권한이 없습니다.");
+        }
+
+        group.update(request);
+
+        return group.getId();
     }
 }
